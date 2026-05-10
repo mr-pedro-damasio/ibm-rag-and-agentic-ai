@@ -1,0 +1,7 @@
+FROM quay.io/jupyter/base-notebook
+
+ENV JUPYTER_ENABLE_LAB=yes
+
+RUN pip install --upgrade pip
+
+CMD ["start-notebook.sh", "--NotebookApp.token=", "--NotebookApp.password=", "--NotebookApp.ip=0.0.0.0", "--NotebookApp.port=8888"]

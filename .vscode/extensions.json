@@ -3,6 +3,8 @@
     "GitHub.copilot",
     "GitHub.copilot-chat",
     "anthropic.claude-code",
-    "google.geminicodeassist"
+    "google.geminicodeassist",
+    "ms-python.python",
+    "ms-toolsai.jupyter"
   ]
 }
