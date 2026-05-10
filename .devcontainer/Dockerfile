@@ -1,5 +1,5 @@
-ARG PROJECT_NAME=zero-config-devcontainer
+ARG PROJECT_NAME=ibm-rag-and-agentic-ai
 FROM mcr.microsoft.com/devcontainers/python:3
-RUN pip install --upgrade pip && pip install jupyterlab notebook
+RUN pip install --upgrade pip && pip install jupyterlab notebook python-dotenv langchain-openrouter rich
 ARG PROJECT_NAME
 LABEL dev.containers.project="${PROJECT_NAME}"

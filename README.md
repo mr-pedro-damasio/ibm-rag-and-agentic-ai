@@ -1,45 +1,34 @@
-# Zero Config Devcontainer
+# IBM RAG and Agentic AI
 
-> A language-agnostic GitHub Template Repository with a fully configured dev container, GitHub Codespaces support, Docker-in-Docker, and AI coding assistants (Claude Code, GitHub Copilot, Gemini) ready out of the box.
+> Jupyter Notebooks for developing generative AI applications with RAG (Retrieval-Augmented Generation) and Agentic AI patterns, using OpenRouter for LLM access.
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/mr-pedro-damasio/zero-config-devcontainer)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/anomalyco/ibm-rag-and-agentic-ai)
 
 ---
 
 ## Overview
 
-This template provides a zero-configuration starting point for any new project. The development environment runs identically in GitHub Codespaces and in a local VS Code dev container. Language runtimes, frameworks, and project-specific tooling are intentionally left out — they are added after the project is created from this template.
+This repository provides a hands-on learning environment for building generative AI applications. It includes Jupyter notebooks covering topics from basic LLM prompting to advanced RAG and agentic workflows.
 
 ---
 
 ## What's Included
 
-- **Dev Container**: Ubuntu-based container with zsh, Node.js LTS, Docker-in-Docker
+- **Dev Container**: Python-based container with JupyterLab, Node.js LTS, Docker-in-Docker
 - **AI Assistants**: Claude Code, GitHub Copilot, Gemini CLI, opencode — all pre-installed
 - **Agent Instructions**: Structured guidance for AI tools via `CLAUDE.md` → `AGENTS.md` → `.github/copilot-instructions.md`
-- **VS Code Config**: Recommended extensions — GitHub Copilot, GitHub Copilot Chat, Claude Code, Gemini Code Assist, GitHub Codespaces, Dev Containers, RemoteHub
-- **Git Configuration**: `.gitignore` for env files, OS artifacts, and editor files
+- **VS Code Config**: Recommended extensions — Python, Pylance, Jupyter, GitHub Copilot, Claude Code, Gemini Code Assist
 
 ---
 
 ## Getting Started
 
-### Creating a new repository from this template
-
-Click **"Use this template"** at the top of the [GitHub repository page](https://github.com/mr-pedro-damasio/zero-config-devcontainer), or use the GitHub CLI:
-
-```bash
-gh repo create my-project --template mr-pedro-damasio/zero-config-devcontainer
-```
-
-Then follow one of the options below to open your new project.
-
 ### Option 1 — GitHub Codespaces (recommended)
 
 1. Click **Open in GitHub Codespaces** above, or go to **Code → Codespaces → New codespace**.
 2. Wait for the environment to build (first run takes a few minutes).
-3. Copy `.env.example` to `.env` and fill in the required values.
-4. You're ready to develop.
+3. Copy `.env.example` to `.env` and fill in your OpenRouter API key.
+4. Open a notebook in `notebooks/` and start coding.
 
 ### Option 2 — Dev Container (local)
 
@@ -48,14 +37,18 @@ Then follow one of the options below to open your new project.
 1. Clone the repository.
 2. Open the project in VS Code.
 3. When prompted, click **Reopen in Container** (or run `Dev Containers: Reopen in Container` from the command palette).
-4. Copy `.env.example` to `.env` and fill in the required values.
-5. You're ready to develop.
+4. Copy `.env.example` to `.env` and fill in your OpenRouter API key.
+5. Open a notebook and start coding.
 
 ---
 
 ## Environment Variables
 
-All configuration is managed via environment variables. See `.env.example` for the full list with descriptions.
+| Variable | Description |
+|----------|-------------|
+| `OPENROUTER_API_KEY` | Your OpenRouter API key for LLM access |
+
+Copy `.env.example` to `.env`:
 
 ```bash
 cp .env.example .env
@@ -66,23 +59,34 @@ cp .env.example .env
 
 ---
 
+## Notebooks
+
+The notebooks are organized under `notebooks/`:
+
+- **Module 01** — Getting started with LLMs via OpenRouter, basic prompting, LangChain integration
+- **Module 02** — (coming soon)
+
+---
+
 ## Docker
 
-This project uses Docker for production builds. The dev container has Docker-in-Docker enabled, so you can build and run production images directly from your development environment.
+Build and run the production Jupyter image:
 
 ```bash
 # Build the production image
-docker build -t zero-config-devcontainer .
+docker build -f docker/Dockerfile.prod -t jupyter-prod .
 
-# Run the production container
-docker run --env-file .env zero-config-devcontainer
+# Run with Docker Compose
+docker compose -f docker/docker-compose.yml up
 ```
+
+The production image uses `quay.io/jupyter/base-notebook` and serves JupyterLab on port 8888.
 
 ---
 
 ## AI Tools
 
-The following AI coding assistants are pre-installed and available in this environment:
+The following AI coding assistants are pre-installed in the dev container:
 
 | Tool | CLI | VS Code Extension |
 |------|-----|-------------------|
@@ -95,25 +99,28 @@ The following AI coding assistants are pre-installed and available in this envir
 
 ## Development
 
-This template is intentionally stack-agnostic. After creating a project from it:
+### Python Dependencies
 
-1. Choose your language/runtime and add it to `.devcontainer/Dockerfile` and/or devcontainer features in `.devcontainer/devcontainer.json`.
-2. Install project dependencies (e.g., `npm install`, `pip install`, `cargo build`).
-3. Copy `.env.example` to `.env` and configure environment variables.
-4. Update `README.md` with project-specific instructions.
-5. Update `AGENTS.md` with project-specific conventions.
+Required packages (installed automatically in the dev container):
+
+- `python-dotenv` — environment variable management
+- `langchain-openrouter` — LangChain integration with OpenRouter
+- `rich` — rich terminal output for notebooks
+
+To add new dependencies:
+
+```bash
+pip install <package>
+```
+
+### Adding new notebooks
+
+1. Create a new directory under `notebooks/` following the module structure.
+2. Add your `.ipynb` files.
+3. Update this README with the new module description.
 
 ---
 
-## Contributing
-
-Contributions to this template are welcome! Please open an issue or pull request on [GitHub](https://github.com/mr-pedro-damasio/zero-config-devcontainer).
-
-When contributing:
-- Keep the template language-agnostic (do not add stack-specific tooling to the base config).
-- Test changes in both GitHub Codespaces and local dev containers.
-- Update documentation (README, AGENTS.md) to reflect any changes.
-
 ## License
 
-[MIT](LICENSE) © 2026 mr-pedro-damasio
+[MIT](LICENSE)
