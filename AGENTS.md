@@ -19,9 +19,4 @@ IBM RAG and Agentic AI — Jupyter Notebooks for learning generative AI developm
 ## Notebooks
 - Located under `notebooks/`
 - Module 01: LLM prompting with OpenRouter + LangChain
-- Module 02: (coming soon)
-
-## Production
-- Build: `docker build -f docker/Dockerfile.prod -t jupyter-prod .`
-- Run: `docker compose -f docker/docker-compose.yml up`
-- Image: `quay.io/jupyter/base-notebook`, no auth, port 8888
+- Module 02: RAG patterns with LangChain

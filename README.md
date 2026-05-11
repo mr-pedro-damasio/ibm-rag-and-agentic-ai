@@ -64,23 +64,7 @@ cp .env.example .env
 The notebooks are organized under `notebooks/`:
 
 - **Module 01** — Getting started with LLMs via OpenRouter, basic prompting, LangChain integration
-- **Module 02** — (coming soon)
-
----
-
-## Docker
-
-Build and run the production Jupyter image:
-
-```bash
-# Build the production image
-docker build -f docker/Dockerfile.prod -t jupyter-prod .
-
-# Run with Docker Compose
-docker compose -f docker/docker-compose.yml up
-```
-
-The production image uses `quay.io/jupyter/base-notebook` and serves JupyterLab on port 8888.
+- **Module 02** — RAG patterns with LangChain
 
 ---
 
