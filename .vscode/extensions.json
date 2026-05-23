@@ -1,6 +1,5 @@
 {
-  "recommendations": [
-    "GitHub.copilot",
+  "recommendations": [    
     "GitHub.copilot-chat",
     "anthropic.claude-code",
     "google.geminicodeassist",
