@@ -19,4 +19,4 @@ RUN pip install --upgrade pip && pip install \
     pypdf \
     langchain-experimental
 ARG PROJECT_NAME
-LABEL dev.containers.project="${PROJECT_NAME}"
+LABEL dev.containers.project="${PROJECT_NAME}-devcontainer"
