@@ -1,5 +1,5 @@
 {
-  "name": "${localWorkspaceFolderBasename}",
+  "name": "${localWorkspaceFolderBasename}-devcontainer",
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
@@ -40,7 +40,7 @@
       ]
     }
   },
-  "runArgs": ["--name", "${localWorkspaceFolderBasename}"],
+  "runArgs": ["--name", "${localWorkspaceFolderBasename}-devcontainer"],
   "postCreateCommand": "npm install -g @anthropic-ai/claude-code @google/gemini-cli opencode-ai && (gh extension install github/gh-copilot || true)",
   "remoteUser": "vscode"
 }

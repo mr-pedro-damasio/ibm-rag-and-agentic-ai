@@ -16,6 +16,7 @@ RUN pip install --upgrade pip && pip install \
     langchain-openai \
     langchain-chroma \
     chromadb \
-    pypdf
+    pypdf \
+    langchain-experimental
 ARG PROJECT_NAME
 LABEL dev.containers.project="${PROJECT_NAME}"
