@@ -4,19 +4,21 @@ RUN pip install --upgrade pip && pip install \
     jupyterlab \
     notebook \
     python-dotenv \
-    rich \
-    pydantic \
-    beautifulsoup4 \
+    wget \
+    textloader \
     langchain \
-    langchain-classic \
-    langchain-core \
+    langchain-text-splitters \ 
     langchain-community \
-    langchain-text-splitters \
     langchain-openrouter \
     langchain-openai \
     langchain-chroma \
-    chromadb \
-    pypdf \
-    langchain-experimental
+    langchain-classic     
+    # rich \
+    # pydantic \
+    # beautifulsoup4 \
+    # langchain \
+    # chromadb \
+    # pypdf \
+    # langchain-experimental \
 ARG PROJECT_NAME
 LABEL dev.containers.project="${PROJECT_NAME}-devcontainer"
