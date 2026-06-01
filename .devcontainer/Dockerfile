@@ -12,7 +12,7 @@ RUN pip install --upgrade pip && pip install \
     langchain-openrouter \
     langchain-openai \
     langchain-chroma \
-    langchain-classic     
+    langchain-classic \
     # rich \
     # pydantic \
     # beautifulsoup4 \
@@ -20,5 +20,7 @@ RUN pip install --upgrade pip && pip install \
     # chromadb \
     # pypdf \
     # langchain-experimental \
+    gradio \
+    huggingface_hub
 ARG PROJECT_NAME
 LABEL dev.containers.project="${PROJECT_NAME}-devcontainer"
