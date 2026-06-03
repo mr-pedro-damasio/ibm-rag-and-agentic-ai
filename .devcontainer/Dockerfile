@@ -18,7 +18,7 @@ RUN pip install --upgrade pip && pip install \
     # beautifulsoup4 \
     # langchain \
     # chromadb \
-    # pypdf \
+    pypdf \ 
     # langchain-experimental \
     gradio \
     huggingface_hub
