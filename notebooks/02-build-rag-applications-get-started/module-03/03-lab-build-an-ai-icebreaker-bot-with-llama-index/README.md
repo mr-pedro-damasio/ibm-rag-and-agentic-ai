@@ -232,24 +232,3 @@ The LinkedIn JSON is split into semantic sections rather than a single raw dump.
 
 This keeps chunk boundaries aligned with meaning, improving retrieval precision.
 
----
-
-## Test Suite
-
-Each phase of the refactor has a standalone regression test. Run them all:
-
-```bash
-python test_phase1.py && \
-python test_phase2.py && \
-python test_phase3.py && \
-python test_phase4.py && \
-python test_phase5.py
-```
-
-| Test file | What it verifies |
-|---|---|
-| `test_phase1.py` | `llm_setup.configure()` sets up LLM and embeddings; `--model` override works |
-| `test_phase2.py` | `config.py` has exactly the expected constants, no dead ones |
-| `test_phase3.py` | Semantic chunking, index creation, embedding verification |
-| `test_phase4.py` | Facts generation, user Q&A, exception propagation |
-| `test_phase5.py` | Full end-to-end pipeline, `--model` flag, no stray imports |

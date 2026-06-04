@@ -80,7 +80,6 @@ def split_profile_data(profile_data: Dict[str, Any]) -> List:
 
 def create_vector_database(nodes: List) -> VectorStoreIndex:
     """Store nodes in an in-memory vector index.
-
     Settings.embed_model must be configured (via llm_setup.configure())
     before calling this function.
     """
