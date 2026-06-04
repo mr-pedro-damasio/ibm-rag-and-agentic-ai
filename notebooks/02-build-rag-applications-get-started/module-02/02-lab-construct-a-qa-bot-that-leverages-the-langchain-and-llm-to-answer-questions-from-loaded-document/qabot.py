@@ -25,8 +25,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-RAG_PROMPT = ChatPromptTemplate.from_template(RAG_PROMPT_TEMPLATE)
-
 
 def llm_model(model_name, model_api_key, model_base_url, model_temperature, model_maxtokens):
     model = ChatOpenRouter(
@@ -37,6 +35,18 @@ def llm_model(model_name, model_api_key, model_base_url, model_temperature, mode
         max_tokens=model_maxtokens,
     )
     return model
+
+
+RAG_PROMPT = ChatPromptTemplate.from_template(RAG_PROMPT_TEMPLATE)
+
+# LLM is stateless — built once at module load rather than once per question.
+LLM = llm_model(
+    model_name=LLM_MODEL,
+    model_api_key=OPENROUTER_API_KEY,
+    model_base_url=OPENROUTER_BASE_URL,
+    model_temperature=LLM_TEMPERATURE,
+    model_maxtokens=LLM_MAX_TOKENS,
+)
 
 
 ## Document loading
@@ -64,24 +74,17 @@ def text_splitter(data_to_split, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVER
     return chunks
 
 
-## Embedding model
-def embedding_model(model_embedding, model_api_key, model_base_url, model_dimensions=1024):
-    logger.info("Initialising embedding model: %s", model_embedding)
-    embeddings_model = OpenAIEmbeddings(
-        model=model_embedding,
-        openai_api_key=model_api_key,
-        openai_api_base=model_base_url,
-        dimensions=model_dimensions
+def build_vector_store(chunks):
+    # Embeds chunks into an in-memory Chroma store. The store is ephemeral —
+    # it lives only for this session and is rebuilt on each new document upload.
+    logger.info("Embedding %d chunks (model=%s, dim=%d)", len(chunks), EMBEDDING_MODEL, EMBEDDING_DIMENSIONS)
+    embeddings = OpenAIEmbeddings(
+        model=EMBEDDING_MODEL,
+        openai_api_key=OPENROUTER_API_KEY,
+        openai_api_base=OPENROUTER_BASE_URL,
+        dimensions=EMBEDDING_DIMENSIONS,
     )
-    return embeddings_model
-
-
-## Vector db
-def vector_database(chunks, model_embedding, model_api_key, model_base_url, model_dimensions):
-    logger.info("Embedding %d chunks into Chroma", len(chunks))
-    embeddings_model = embedding_model(model_embedding, model_api_key, model_base_url, model_dimensions)
-    vectordb = Chroma.from_documents(chunks, embeddings_model)
-    return vectordb
+    return Chroma.from_documents(chunks, embeddings)
 
 
 def format_docs(docs):
@@ -103,7 +106,7 @@ def build_retriever(file):
         if not chunks:
             return None, "No text could be extracted from this PDF. Is it a scanned image?"
 
-        vectordb = vector_database(chunks, EMBEDDING_MODEL, OPENROUTER_API_KEY, OPENROUTER_BASE_URL, EMBEDDING_DIMENSIONS)
+        vectordb = build_vector_store(chunks)
         retriever_obj = vectordb.as_retriever()
         logger.info("Retriever ready")
         return retriever_obj, f"Document indexed: {len(chunks)} chunks ready."
@@ -120,17 +123,10 @@ def answer_question(query, retriever_obj):
         return "Please enter a question."
     logger.info("Answering query: %r", query)
     try:
-        llm = llm_model(
-            model_name=LLM_MODEL,
-            model_api_key=OPENROUTER_API_KEY,
-            model_base_url=OPENROUTER_BASE_URL,
-            model_temperature=LLM_TEMPERATURE,
-            model_maxtokens=LLM_MAX_TOKENS,
-        )
         chain = (
             {"context": retriever_obj | format_docs, "question": RunnablePassthrough()}
             | RAG_PROMPT
-            | llm
+            | LLM
             | StrOutputParser()
         )
         answer = chain.invoke(query)
