@@ -49,7 +49,6 @@ LLM = llm_model(
 )
 
 
-## Document loading
 def document_loader(file_path):
     logger.info("Loading PDF from: %s", file_path)
     reader = PdfReader(file_path)
@@ -62,7 +61,6 @@ def document_loader(file_path):
     ]
 
 
-## Text splitting
 def text_splitter(data_to_split, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP):
     logger.info("Splitting %d pages into chunks (size=%d, overlap=%d)", len(data_to_split), chunk_size, chunk_overlap)
     splitter = RecursiveCharacterTextSplitter(
@@ -91,7 +89,8 @@ def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
 
-## Build retriever — indexing step, runs once per document
+# Indexing step — runs once per document upload; result cached in gr.State so
+# subsequent questions reuse the retriever without re-embedding.
 def build_retriever(file):
     if file is None:
         return None, "No file uploaded."
@@ -115,7 +114,7 @@ def build_retriever(file):
         return None, f"Failed to process document: {exc}"
 
 
-## Answer question using cached retriever
+# Query step — receives the cached retriever from gr.State and runs the LCEL chain.
 def answer_question(query, retriever_obj):
     if retriever_obj is None:
         return "Please process a document first."
@@ -123,6 +122,10 @@ def answer_question(query, retriever_obj):
         return "Please enter a question."
     logger.info("Answering query: %r", query)
     try:
+        # LCEL chain — reads left to right:
+        # retriever fetches the most relevant chunks → format_docs joins them into one
+        # context string → RAG_PROMPT fills {context} and {question} → LLM generates
+        # the answer → StrOutputParser extracts the plain string from the message object.
         chain = (
             {"context": retriever_obj | format_docs, "question": RunnablePassthrough()}
             | RAG_PROMPT
@@ -137,7 +140,6 @@ def answer_question(query, retriever_obj):
         return f"Failed to generate an answer: {exc}"
 
 
-# Create Gradio Blocks interface
 with gr.Blocks(title="RAG Chatbot") as rag_application:
     retriever_state = gr.State(value=None)
 
@@ -167,6 +169,5 @@ with gr.Blocks(title="RAG Chatbot") as rag_application:
     )
 
 
-# Launch the app
 logger.info("Starting QA Bot on %s:%d (share=%s)", GRADIO_SERVER_NAME, GRADIO_SERVER_PORT, GRADIO_SHARE)
 rag_application.launch(server_name=GRADIO_SERVER_NAME, server_port=GRADIO_SERVER_PORT, share=GRADIO_SHARE)
