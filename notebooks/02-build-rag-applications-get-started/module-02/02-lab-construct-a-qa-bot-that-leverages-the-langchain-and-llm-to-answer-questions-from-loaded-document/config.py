@@ -6,6 +6,15 @@ dotenv.load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL")
 
+# Fail fast at import time — a clear error here is better than a cryptic
+# authentication failure on the first API call.
+_missing = [v for v in ("OPENROUTER_API_KEY", "OPENROUTER_BASE_URL") if not os.getenv(v)]
+if _missing:
+    raise EnvironmentError(
+        f"Required environment variables not set: {', '.join(_missing)}\n"
+        "Copy .env.example to .env and fill in the values."
+    )
+
 # LLM used for answer generation
 LLM_MODEL = "openai/gpt-4o-mini"
 LLM_TEMPERATURE = 0.7   # slight randomness for natural-sounding answers; set to 0 for deterministic output

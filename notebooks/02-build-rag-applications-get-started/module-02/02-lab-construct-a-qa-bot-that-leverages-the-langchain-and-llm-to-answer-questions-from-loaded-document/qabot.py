@@ -93,13 +93,23 @@ def build_retriever(file):
     if file is None:
         return None, "No file uploaded."
     logger.info("Building retriever for: %s", file)
-    splits = document_loader(file)
-    chunks = text_splitter(splits)
-    logger.info("Split into %d chunks; embedding now...", len(chunks))
-    vectordb = vector_database(chunks, EMBEDDING_MODEL, OPENROUTER_API_KEY, OPENROUTER_BASE_URL, EMBEDDING_DIMENSIONS)
-    retriever_obj = vectordb.as_retriever()
-    logger.info("Retriever ready")
-    return retriever_obj, f"Document indexed: {len(chunks)} chunks ready."
+    try:
+        splits = document_loader(file)
+        chunks = text_splitter(splits)
+        logger.info("Split into %d chunks; embedding now...", len(chunks))
+
+        # Scanned/image-only PDFs produce no extractable text — warn the user
+        # rather than passing an empty list to Chroma, which raises unhelpfully.
+        if not chunks:
+            return None, "No text could be extracted from this PDF. Is it a scanned image?"
+
+        vectordb = vector_database(chunks, EMBEDDING_MODEL, OPENROUTER_API_KEY, OPENROUTER_BASE_URL, EMBEDDING_DIMENSIONS)
+        retriever_obj = vectordb.as_retriever()
+        logger.info("Retriever ready")
+        return retriever_obj, f"Document indexed: {len(chunks)} chunks ready."
+    except Exception as exc:
+        logger.exception("Failed to build retriever")
+        return None, f"Failed to process document: {exc}"
 
 
 ## Answer question using cached retriever
@@ -109,22 +119,26 @@ def answer_question(query, retriever_obj):
     if not query or not query.strip():
         return "Please enter a question."
     logger.info("Answering query: %r", query)
-    llm = llm_model(
-        model_name=LLM_MODEL,
-        model_api_key=OPENROUTER_API_KEY,
-        model_base_url=OPENROUTER_BASE_URL,
-        model_temperature=LLM_TEMPERATURE,
-        model_maxtokens=LLM_MAX_TOKENS,
-    )
-    chain = (
-        {"context": retriever_obj | format_docs, "question": RunnablePassthrough()}
-        | RAG_PROMPT
-        | llm
-        | StrOutputParser()
-    )
-    answer = chain.invoke(query)
-    logger.info("Answer length: %d chars", len(answer))
-    return answer
+    try:
+        llm = llm_model(
+            model_name=LLM_MODEL,
+            model_api_key=OPENROUTER_API_KEY,
+            model_base_url=OPENROUTER_BASE_URL,
+            model_temperature=LLM_TEMPERATURE,
+            model_maxtokens=LLM_MAX_TOKENS,
+        )
+        chain = (
+            {"context": retriever_obj | format_docs, "question": RunnablePassthrough()}
+            | RAG_PROMPT
+            | llm
+            | StrOutputParser()
+        )
+        answer = chain.invoke(query)
+        logger.info("Answer length: %d chars", len(answer))
+        return answer
+    except Exception as exc:
+        logger.exception("Failed to answer question")
+        return f"Failed to generate an answer: {exc}"
 
 
 # Create Gradio Blocks interface
