@@ -15,7 +15,7 @@ OPENROUTER_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 OPENROUTER_MODEL = "openai/gpt-4o-mini"
 OPENROUTER_EMBEDDINGS_MODEL = "openai/text-embedding-3-small"
 
-GRADIO_SERVER_NAME = "http://localhost"
+GRADIO_SERVER_NAME = "localhost"
 GRADIO_SERVER_PORT = 7860
 
 def llm_model(model_name, model_api_key, model_base_url, model_temperature, model_maxtokens, model_maxcompletiontokens):

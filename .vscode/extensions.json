@@ -2,7 +2,6 @@
   "recommendations": [    
     "GitHub.copilot-chat",
     "anthropic.claude-code",
-    "google.geminicodeassist",
     "ms-python.python",
     "ms-toolsai.jupyter"
   ]

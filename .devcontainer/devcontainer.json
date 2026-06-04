@@ -1,17 +1,10 @@
 {
   "name": "${localWorkspaceFolderBasename}-devcontainer",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "args": {
-      "PROJECT_NAME": "${localWorkspaceFolderBasename}"
-    }
-  },
+  "image": "mcr.microsoft.com/devcontainers/python:3",
   "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "lts"
-    },
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/copilot-cli:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
     "ghcr.io/devcontainers/features/common-utils:2": {},
     "ghcr.io/devcontainers/features/node:2": {}
   },
@@ -31,7 +24,6 @@
         "GitHub.copilot",
         "GitHub.copilot-chat",
         "anthropic.claude-code",
-        "google.geminicodeassist",
         "ms-python.python",
         "ms-python.vscode-pylance",
         "ms-toolsai.jupyter",
@@ -41,6 +33,6 @@
     }
   },
   "runArgs": ["--name", "${localWorkspaceFolderBasename}-devcontainer"],
-  "postCreateCommand": "npm install -g @anthropic-ai/claude-code @google/gemini-cli opencode-ai && (gh extension install github/gh-copilot || true)",
+  "postCreateCommand": "bash .devcontainer/postCreate.sh",
   "remoteUser": "vscode"
 }

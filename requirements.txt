@@ -1,0 +1,21 @@
+# Pin a package with ==version for stability, e.g.: langchain==0.3.0
+# Leave unpinned to always get the latest on rebuild.
+
+jupyterlab
+notebook
+python-dotenv
+wget
+textloader
+langchain
+langchain-text-splitters
+langchain-community
+langchain-openrouter
+langchain-openai
+langchain-chroma
+langchain-classic
+pypdf
+gradio
+llama-index-core
+llama-index
+llama-index-llms-langchain
+llama-index-llms-openai-like

@@ -14,10 +14,10 @@ This repository provides a hands-on learning environment for building generative
 
 ## What's Included
 
-- **Dev Container**: Python-based container with JupyterLab, Node.js LTS, Docker-in-Docker
-- **AI Assistants**: Claude Code, GitHub Copilot, Gemini CLI, opencode — all pre-installed
+- **Dev Container**: Python-based container with JupyterLab and Node.js LTS
+- **AI Assistants**: Claude Code, GitHub Copilot, Antigravity CLI, opencode — all pre-installed
 - **Agent Instructions**: Structured guidance for AI tools via `CLAUDE.md` → `AGENTS.md` → `.github/copilot-instructions.md`
-- **VS Code Config**: Recommended extensions — Python, Pylance, Jupyter, GitHub Copilot, Claude Code, Gemini Code Assist
+- **VS Code Config**: Recommended extensions — Python, Pylance, Jupyter, GitHub Copilot, Claude Code
 
 ---
 
@@ -61,10 +61,17 @@ cp .env.example .env
 
 ## Notebooks
 
-The notebooks are organized under `notebooks/`:
+Organized under `notebooks/` by course and module:
 
-- **Module 01** — Getting started with LLMs via OpenRouter, basic prompting, LangChain integration
-- **Module 02** — RAG patterns with LangChain
+### Course 01 — Develop Generative AI Applications: Get Started
+- **Module 01** — Prompt engineering and LangChain PromptTemplates
+- **Module 02** — Building smarter AI apps — empowering LLMs with LangChain (tools and agents)
+- **Module 03** — Hands-on with GenAI: choosing the right model for your application
+
+### Course 02 — Build RAG Applications: Get Started
+- **Module 01** — Summarize private documents using RAG, LangChain, and LLMs
+- **Module 02** — Gradio interfaces and QA bots with LangChain
+- **Module 03** — AI icebreaker bot with LlamaIndex
 
 ---
 
@@ -85,22 +92,25 @@ The following AI coding assistants are pre-installed in the dev container:
 
 ### Python Dependencies
 
-Required packages (installed automatically in the dev container):
+All dependencies are declared in `requirements.txt` and installed automatically when the container is created. Key packages include:
 
+- `jupyterlab`, `notebook` — interactive notebook environment
 - `python-dotenv` — environment variable management
-- `langchain-openrouter` — LangChain integration with OpenRouter
-- `rich` — rich terminal output for notebooks
+- `langchain`, `langchain-community`, `langchain-openrouter`, `langchain-openai`, `langchain-chroma` — LangChain ecosystem
+- `pypdf` — PDF document loading
+- `gradio` — interactive web UIs
+- `huggingface_hub` — Hugging Face model and dataset access
 
-To add new dependencies:
+To add a new dependency, add it to `requirements.txt` then run:
 
 ```bash
-pip install <package>
+sudo uv pip install --system -r requirements.txt
 ```
 
 ### Adding new notebooks
 
-1. Create a new directory under `notebooks/` following the module structure.
-2. Add your `.ipynb` files.
+1. Create a new directory under `notebooks/` following the course/module structure.
+2. Add your `.ipynb` or `.py` files.
 3. Update this README with the new module description.
 
 ---
