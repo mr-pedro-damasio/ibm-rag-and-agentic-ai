@@ -9,6 +9,7 @@
     "context7@claude-plugins-official": false,
     "feature-dev@claude-plugins-official": false,
     "frontend-design@claude-plugins-official": false,
-    "playwright@claude-plugins-official": false
+    "playwright@claude-plugins-official": false,
+    "superpowers@claude-plugins-official": true
   }
 }

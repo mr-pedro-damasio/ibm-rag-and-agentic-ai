@@ -5,11 +5,12 @@ dotenv.load_dotenv()
 # LinkedIn
 MOCK_DATA_URL = "https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/ZRe59Y_NJyn3hZgnF1iFYA/linkedin-profile-data.json"
 LINKEDIN_API_ENDPOINT = "https://nubela.co/proxycurl/api/v2/linkedin"
+
 PROXYCURL_API_KEY = os.getenv("PROXY_CURL_API_KEY")
 
 # OpenRouter
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL")
 
 # Embedding model
 EMBEDDING_MODEL = "openai/text-embedding-3-small"

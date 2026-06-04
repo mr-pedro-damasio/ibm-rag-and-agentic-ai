@@ -26,6 +26,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+# Factory kept as a named function so the parameter list is explicit and the
+# module-level LLM = llm_model(...) call site reads as configuration, not magic.
 def llm_model(model_name, model_api_key, model_base_url, model_temperature, model_maxtokens):
     model = ChatOpenRouter(
         model=model_name,
@@ -52,6 +54,8 @@ LLM = llm_model(
 def document_loader(file_path):
     logger.info("Loading PDF from: %s", file_path)
     reader = PdfReader(file_path)
+    # extract_text() returns None for image-only pages; `or ""` keeps the page
+    # in the list so that page-number metadata stays accurate across the whole PDF.
     return [
         Document(
             page_content=page.extract_text() or "",
@@ -63,6 +67,9 @@ def document_loader(file_path):
 
 def text_splitter(data_to_split, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP):
     logger.info("Splitting %d pages into chunks (size=%d, overlap=%d)", len(data_to_split), chunk_size, chunk_overlap)
+    # RecursiveCharacterTextSplitter tries to split on paragraph → sentence →
+    # word boundaries before falling back to raw characters, so chunks tend to
+    # end at natural breaks rather than mid-sentence.
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
@@ -79,13 +86,15 @@ def build_vector_store(chunks):
     embeddings = OpenAIEmbeddings(
         model=EMBEDDING_MODEL,
         openai_api_key=OPENROUTER_API_KEY,
-        openai_api_base=OPENROUTER_BASE_URL,
+        openai_api_base=OPENROUTER_BASE_URL,  # routes the OpenAI SDK's embedding calls through OpenRouter
         dimensions=EMBEDDING_DIMENSIONS,
     )
     return Chroma.from_documents(chunks, embeddings)
 
 
 def format_docs(docs):
+    # Double newline acts as a clear paragraph separator; a single newline risks
+    # fusing two unrelated chunks into a run-on passage inside the prompt context.
     return "\n\n".join(doc.page_content for doc in docs)
 
 
@@ -141,10 +150,14 @@ def answer_question(query, retriever_obj):
 
 
 with gr.Blocks(title="RAG Chatbot") as rag_application:
+    # gr.State holds the retriever object server-side across button clicks for
+    # this user session — Gradio passes it automatically as a function argument.
     retriever_state = gr.State(value=None)
 
     gr.Markdown("## RAG Chatbot\nUpload a PDF, process it, then ask questions.")
 
+    # Two separate buttons enforce the intended flow: index once, query many times.
+    # Combining them would re-embed the document on every question, wasting API calls.
     with gr.Row():
         file_input = gr.File(label="Upload PDF", file_types=[".pdf"], type="filepath")
         process_btn = gr.Button("Process Document", variant="primary")

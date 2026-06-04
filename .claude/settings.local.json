@@ -4,7 +4,12 @@
       "Bash(python3 -c \"from langchain_openrouter import ChatOpenRouter\")",
       "Bash(python3 -c \"import langchain_openrouter; print\\(langchain_openrouter.__file__\\)\")",
       "Bash(python3 -c \"import main\")",
-      "Bash(python3 *)"
+      "Bash(python3 *)",
+      "Bash(git -C /workspaces/ibm-rag-and-agentic-ai show HEAD:notebooks/02-build-rag-applications-get-started/module-02/02-lab-construct-a-qa-bot-that-leverages-the-langchain-and-llm-to-answer-questions-from-loaded-document/01-qabot.py)",
+      "Bash(python -c \"import config; print\\('config OK:', config.LLM_MODEL, config.EMBEDDING_MODEL\\)\")",
+      "Bash(git -C /workspaces/ibm-rag-and-agentic-ai add notebooks/02-build-rag-applications-get-started/module-02/02-lab-construct-a-qa-bot-that-leverages-the-langchain-and-llm-to-answer-questions-from-loaded-document/config.py notebooks/02-build-rag-applications-get-started/module-02/02-lab-construct-a-qa-bot-that-leverages-the-langchain-and-llm-to-answer-questions-from-loaded-document/qabot.py)",
+      "Bash(git -C /workspaces/ibm-rag-and-agentic-ai commit -m ' *)",
+      "Bash(git *)"
     ]
   },
   "enabledPlugins": {
