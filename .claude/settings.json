@@ -10,6 +10,7 @@
     "feature-dev@claude-plugins-official": false,
     "frontend-design@claude-plugins-official": false,
     "playwright@claude-plugins-official": false,
-    "superpowers@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true
   }
 }

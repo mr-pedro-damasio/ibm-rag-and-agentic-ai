@@ -78,13 +78,10 @@ def split_profile_data(profile_data: Dict[str, Any]) -> List:
     return nodes
 
 
-def create_vector_database(nodes: List) -> VectorStoreIndex:
-    """Store nodes in an in-memory vector index.
-    Settings.embed_model must be configured (via llm_setup.configure())
-    before calling this function.
-    """
+def create_vector_database(nodes: List, embed_model) -> VectorStoreIndex:
+    """Store nodes in an in-memory vector index using the given embedding model."""
     logger.info("Building VectorStoreIndex...")
-    index = VectorStoreIndex(nodes=nodes, show_progress=True)
+    index = VectorStoreIndex(nodes=nodes, embed_model=embed_model, show_progress=True)
     logger.info("VectorStoreIndex built successfully.")
     return index
 

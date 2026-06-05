@@ -5,13 +5,11 @@ import config
 logger = logging.getLogger(__name__)
 
 
-def generate_initial_facts(index: VectorStoreIndex) -> str:
-    """Return three interesting facts about the person's career or education.
-
-    Settings.llm and Settings.embed_model must be configured before calling.
-    """
+def generate_initial_facts(index: VectorStoreIndex, llm) -> str:
+    """Return three interesting facts about the person's career or education."""
     logger.info("Generating initial facts...")
     engine = index.as_query_engine(
+        llm=llm,
         similarity_top_k=config.QUERY_MODEL_TOP_K,
         text_qa_template=PromptTemplate(config.INITIAL_FACTS_TEMPLATE),
     )
@@ -22,16 +20,15 @@ def generate_initial_facts(index: VectorStoreIndex) -> str:
     return response.response
 
 
-def answer_user_query(index: VectorStoreIndex, user_query: str):
+def answer_user_query(index: VectorStoreIndex, llm, user_query: str):
     """Answer a free-form question using the profile index.
-
-    Settings.llm and Settings.embed_model must be configured before calling.
 
     Returns:
         LlamaIndex Response object. Callers access .response for the text.
     """
     logger.info(f"Answering user query: '{user_query}'")
     engine = index.as_query_engine(
+        llm=llm,
         similarity_top_k=config.QUERY_MODEL_TOP_K,
         text_qa_template=PromptTemplate(config.USER_QUESTION_TEMPLATE),
     )

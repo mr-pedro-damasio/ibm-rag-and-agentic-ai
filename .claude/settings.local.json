@@ -9,7 +9,20 @@
       "Bash(python -c \"import config; print\\('config OK:', config.LLM_MODEL, config.EMBEDDING_MODEL\\)\")",
       "Bash(git -C /workspaces/ibm-rag-and-agentic-ai add notebooks/02-build-rag-applications-get-started/module-02/02-lab-construct-a-qa-bot-that-leverages-the-langchain-and-llm-to-answer-questions-from-loaded-document/config.py notebooks/02-build-rag-applications-get-started/module-02/02-lab-construct-a-qa-bot-that-leverages-the-langchain-and-llm-to-answer-questions-from-loaded-document/qabot.py)",
       "Bash(git -C /workspaces/ibm-rag-and-agentic-ai commit -m ' *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Skill(code-review:code-review)",
+      "Bash(python *)",
+      "Bash(python qabot.py)",
+      "Bash(echo \"PID: $!\")",
+      "Read(//tmp/**)",
+      "Bash(break)",
+      "Bash(curl -s http://localhost:7860/)",
+      "Bash(curl -s -X POST http://localhost:7860/upload -F 'files=@/tmp/smoke_test.pdf;type=application/pdf')",
+      "Bash(curl -s -X POST http://localhost:7860/gradio_api/call/predict -H 'Content-Type: application/json' -d '{\"data\": [{\"path\": \"/tmp/claude-1000/gradio/e81a53cea3db1359d798a5f69ac7f48868f0c90c380ba4c07868bd72d9ef006c/smoke_test.pdf\", \"orig_name\": \"smoke_test.pdf\"}]}')",
+      "Bash(curl -s http://localhost:7860/gradio_api/info)",
+      "Bash(curl -s -X POST http://localhost:7860/gradio_api/call/build_retriever -H 'Content-Type: application/json' -d '{\"data\": [{\"path\": \"/tmp/claude-1000/gradio/e81a53cea3db1359d798a5f69ac7f48868f0c90c380ba4c07868bd72d9ef006c/smoke_test.pdf\", \"orig_name\": \"smoke_test.pdf\", \"size\": null, \"url\": null}]}')",
+      "Bash(curl -s -X POST http://localhost:7860/gradio_api/call/build_retriever -H 'Content-Type: application/json' -d '{\"data\": [{\"path\": \"/tmp/claude-1000/gradio/e81a53cea3db1359d798a5f69ac7f48868f0c90c380ba4c07868bd72d9ef006c/smoke_test.pdf\", \"orig_name\": \"smoke_test.pdf\", \"size\": null, \"url\": null, \"meta\": {\"_type\": \"gradio.FileData\"}}]}')",
+      "Bash(kill 1168)"
     ]
   },
   "enabledPlugins": {

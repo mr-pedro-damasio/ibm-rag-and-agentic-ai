@@ -6,7 +6,7 @@ A RAG-powered chatbot that ingests a LinkedIn profile, vectorizes it with LlamaI
 
 ## Architecture
 
-The pipeline has two distinct phases: **indexing** (runs once at startup) and **querying** (runs on every user question). Both phases share the same LLM and embedding model, configured once via the LlamaIndex `Settings` singleton.
+The pipeline has two distinct phases: **indexing** (runs once at startup) and **querying** (runs on every user question). Both phases share the same LLM and embedding model, built once by `llm_setup.configure()` and passed explicitly through the call chain.
 
 ### High-level flow
 
@@ -17,10 +17,10 @@ The pipeline has two distinct phases: **indexing** (runs once at startup) and **
 │  main.py (argparse)                                             │
 │      │                                                          │
 │      ▼                                                          │
-│  llm_setup.configure()                                          │
-│      ├── Settings.llm       = OpenAILike    ──► OpenRouter LLM  │
-│      ├── Settings.embed_model = OpenAIEmbedding ► OpenRouter    │
-│      └── Settings.chunk_size = 500                              │
+│  setup = llm_setup.configure()                                  │
+│      ├── setup.llm       = OpenAILike    ──► OpenRouter LLM     │
+│      ├── setup.embed_model = OpenAIEmbedding ──► OpenRouter     │
+│      └── Settings.chunk_size = 500  (safety-net write)          │
 └─────────────────────────────────────────────────────────────────┘
                 │
                 ▼
@@ -79,13 +79,15 @@ The pipeline has two distinct phases: **indexing** (runs once at startup) and **
 
 This is the first substantive call and must complete before anything else runs. It populates the LlamaIndex `Settings` singleton (from `llama_index.core`):
 
-- **`Settings.llm`** — an `OpenAILike` instance (`llama_index.llms.openai_like`). Unlike the `OpenAI` adapter (which is hard-coded to OpenAI's API), `OpenAILike` accepts any OpenAI-protocol endpoint. It is pointed at `https://openrouter.ai/api/v1` with `is_chat_model=True`, so it uses the `/chat/completions` endpoint. The model name is passed through as-is (e.g. `"openai/gpt-4o-mini"`) — no prefix manipulation needed.
+`configure()` builds two objects and returns them as an `LLMSetup` dataclass. It also writes them to the LlamaIndex `Settings` singleton as a safety net for any internal LlamaIndex components that bypass explicit arguments.
 
-- **`Settings.embed_model`** — an `OpenAIEmbedding` instance (`llama_index.embeddings.openai`). Also pointed at OpenRouter's base URL. Because `OpenAIEmbedding` forwards the model name directly to the `/embeddings` endpoint and OpenRouter's embeddings endpoint does not accept provider prefixes, the `"openai/"` prefix is stripped here (e.g. `"text-embedding-3-small"`). `dimensions=1024` requests a compressed output rather than the default 1536.
+- **`llm`** — an `OpenAILike` instance (`llama_index.llms.openai_like`). Unlike the `OpenAI` adapter (which is hard-coded to OpenAI's API), `OpenAILike` accepts any OpenAI-protocol endpoint. It is pointed at `https://openrouter.ai/api/v1` with `is_chat_model=True`, so it uses the `/chat/completions` endpoint. The model name is passed through as-is (e.g. `"openai/gpt-4o-mini"`) — no prefix manipulation needed.
+
+- **`embed_model`** — an `OpenAIEmbedding` instance (`llama_index.embeddings.openai`). Also pointed at OpenRouter's base URL. Because `OpenAIEmbedding` forwards the model name directly to the `/embeddings` endpoint and OpenRouter's embeddings endpoint does not accept provider prefixes, the `"openai/"` prefix is stripped here (e.g. `"text-embedding-3-small"`). `dimensions=1024` requests a compressed output rather than the default 1536.
 
 - **`Settings.chunk_size`** — set to 500 tokens; used automatically by `SentenceSplitter` when it reads from `Settings`.
 
-After this call, every LlamaIndex component (`VectorStoreIndex`, `as_query_engine()`, retrievers) reads from `Settings` automatically — no model objects need to be passed through function arguments.
+The returned `LLMSetup(llm, embed_model)` is then passed explicitly to `create_vector_database()`, `generate_initial_facts()`, and `answer_user_query()` so that each function's model dependency is visible in its signature.
 
 #### 3. Profile ingestion — `profile_extraction.extract_linkedin_profile()`
 
@@ -115,7 +117,7 @@ The list of `Document` objects is then fed to `SentenceSplitter(chunk_size=500)`
 
 #### 5. Indexing — `data_processing.create_vector_database()`
 
-`VectorStoreIndex(nodes=nodes)` (`llama_index.core`) iterates over every `TextNode` and calls `Settings.embed_model.get_text_embedding(node.text)`. Each call makes a POST request to `https://openrouter.ai/api/v1/embeddings`, which routes to the OpenAI `text-embedding-3-small` model. The response is a 1024-dimensional `list[float]`.
+`VectorStoreIndex(nodes=nodes, embed_model=embed_model)` (`llama_index.core`) iterates over every `TextNode` and calls `embed_model.get_text_embedding(node.text)`. Each call makes a POST request to `https://openrouter.ai/api/v1/embeddings`, which routes to the OpenAI `text-embedding-3-small` model. The response is a 1024-dimensional `list[float]`.
 
 The index stores two things in a `StorageContext`:
 - **`SimpleDocumentStore`** — maps `node_id → TextNode` (full text + metadata).
@@ -125,11 +127,11 @@ The index stores two things in a `StorageContext`:
 
 #### 6. Initial facts — `query_engine.generate_initial_facts()`
 
-`index.as_query_engine(similarity_top_k=5, text_qa_template=PromptTemplate(...))` constructs a `RetrieverQueryEngine` backed by a `VectorIndexRetriever`. The engine's `query()` method runs two sub-steps:
+`index.as_query_engine(llm=llm, similarity_top_k=5, text_qa_template=PromptTemplate(...))` constructs a `RetrieverQueryEngine` backed by a `VectorIndexRetriever`. The engine's `query()` method runs two sub-steps:
 
-**Retrieval:** The query string `"Provide three interesting facts..."` is embedded via `Settings.embed_model` (another POST to `/embeddings`). The resulting vector is compared against every embedding in `SimpleVectorStore` using cosine similarity. The top-5 `TextNode` chunks are returned as `NodeWithScore` objects.
+**Retrieval:** The query string `"Provide three interesting facts..."` is embedded (another POST to `/embeddings`). The resulting vector is compared against every embedding in `SimpleVectorStore` using cosine similarity. The top-5 `TextNode` chunks are returned as `NodeWithScore` objects.
 
-**Synthesis:** The retrieved chunks are concatenated into a `context_str`. The `PromptTemplate` (`INITIAL_FACTS_TEMPLATE`) substitutes `{context_str}` with the retrieved text. The filled prompt is sent to `Settings.llm` as a POST to `https://openrouter.ai/api/v1/chat/completions`. The `response.response` attribute holds the plain-text answer string, which is returned and printed.
+**Synthesis:** The retrieved chunks are concatenated into a `context_str`. The `PromptTemplate` (`INITIAL_FACTS_TEMPLATE`) substitutes `{context_str}` with the retrieved text. The filled prompt is sent to the `llm` as a POST to `https://openrouter.ai/api/v1/chat/completions`. The `response.response` attribute holds the plain-text answer string, which is returned and printed.
 
 #### 7. Interactive chatbot — `main.py chatbot_interface()`
 
@@ -156,7 +158,7 @@ A `while True` loop reads user input via `input("You: ")`. Each non-exit input i
 | File | Role |
 |---|---|
 | `main.py` | CLI entry point. Parses args, calls `llm_setup.configure()`, runs the pipeline. |
-| `llm_setup.py` | Configures `Settings.llm` (`OpenAILike`) and `Settings.embed_model` (`OpenAIEmbedding`). Accepts an optional `model_name` override for the `--model` flag. |
+| `llm_setup.py` | Builds `OpenAILike` (LLM) and `OpenAIEmbedding` (embed model), writes them to `Settings` as a safety net, and returns them as an `LLMSetup` dataclass. Accepts an optional `model_name` override for the `--model` flag. |
 | `config.py` | All constants: API keys (from env), model names, chunk size, prompt templates. |
 | `profile_extraction.py` | Fetches LinkedIn JSON via ProxyCurl or a mock S3 URL. Cleans empty fields. |
 | `data_processing.py` | Splits the profile into one `Document` per semantic section, builds a `VectorStoreIndex`. |

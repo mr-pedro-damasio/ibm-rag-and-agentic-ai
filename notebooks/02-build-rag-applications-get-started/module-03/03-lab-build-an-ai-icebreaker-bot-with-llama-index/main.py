@@ -12,29 +12,30 @@ import query_engine
 # Set up module-level logger
 logger = logging.getLogger(__name__)
 
-def chatbot_interface(index):
+def chatbot_interface(index, llm):
     """
     Provides a simple chatbot interface for user interaction.
     Args:
         index: VectorStoreIndex containing the LinkedIn profile data.
+        llm: LLM instance to use for answering queries.
     """
     print("\nYou can now ask more in-depth questions about this person. Type 'exit', 'quit', or 'bye' to quit.")
-    
+
     while True:
         user_query = input("You: ")
         if user_query.lower() in ['exit', 'quit', 'bye']:
             print("Bot: Goodbye!")
             break
-        
+
         print("Bot is typing...", end='')
         sys.stdout.flush()
         time.sleep(1)  # Simulate typing delay
         print('\r', end='')
-        
-        response = query_engine.answer_user_query(index, user_query)
+
+        response = query_engine.answer_user_query(index, llm, user_query)
         print(f"Bot: {response.response.strip()}\n")
 
-def process_linkedin(linkedin_url, api_key=None, mock=True):
+def process_linkedin(linkedin_url, setup, api_key=None, mock=True):
     try:
         logger.info(f"Processing LinkedIn URL: {linkedin_url} (mock mode: {mock})")
 
@@ -46,7 +47,7 @@ def process_linkedin(linkedin_url, api_key=None, mock=True):
         nodes = data_processing.split_profile_data(profile_data)
         logger.info(f"Split profile into {len(nodes)} nodes.")
 
-        vectordb_index = data_processing.create_vector_database(nodes)
+        vectordb_index = data_processing.create_vector_database(nodes, setup.embed_model)
         logger.info("Vector database index created.")
 
         if not data_processing.verify_embeddings(vectordb_index):
@@ -54,11 +55,11 @@ def process_linkedin(linkedin_url, api_key=None, mock=True):
         else:
             logger.info("Embedding verification passed.")
 
-        initial_facts = query_engine.generate_initial_facts(vectordb_index)
+        initial_facts = query_engine.generate_initial_facts(vectordb_index, setup.llm)
         print("\nHere are 3 interesting facts about this person:")
         print(initial_facts)
 
-        chatbot_interface(vectordb_index)
+        chatbot_interface(vectordb_index, setup.llm)
 
     except Exception:
         logger.exception("Fatal error during profile processing.")
@@ -88,9 +89,7 @@ def main():
     linkedin_url = args.url or input("Enter LinkedIn profile URL (or press Enter to use mock data): ")
     use_mock = args.mock or not linkedin_url
     
-    # Configure LlamaIndex Settings — must happen before any index or query engine is created.
-    # args.model is None if not provided, which makes configure() use config.QUERY_MODEL.
-    llm_setup.configure(model_name=args.model)
+    setup = llm_setup.configure(model_name=args.model)
 
     api_key = args.api_key or config.PROXYCURL_API_KEY
 
@@ -100,7 +99,7 @@ def main():
     if use_mock and not linkedin_url:
         linkedin_url = "https://www.linkedin.com/in/leonkatsnelson/"
 
-    process_linkedin(linkedin_url, api_key, mock=use_mock)
+    process_linkedin(linkedin_url, setup, api_key, mock=use_mock)
 
 if __name__ == "__main__":
     main()

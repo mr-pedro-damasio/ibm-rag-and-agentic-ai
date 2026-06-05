@@ -1,3 +1,4 @@
+import config
 import gradio as gr
 
 def sentence_builder(quantity, tech_worker_type, countries, place, activity_list, morning):
@@ -32,4 +33,4 @@ demo = gr.Interface(
     ]
 )
 
-demo.launch(server_name="127.0.0.1", server_port= 7860)
+demo.launch(server_name=config.GRADIO_SERVER_NAME, server_port=config.GRADIO_SERVER_PORT, share=config.GRADIO_SHARE)
