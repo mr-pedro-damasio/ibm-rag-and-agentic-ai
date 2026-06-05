@@ -33,9 +33,11 @@ def llm_model(model_name: str, model_api_key: str, model_base_url: str, model_te
     )
     return model
 
+# RAG_PROMPT and LLM are module-level singletons — both are stateless and
+# expensive to initialise (network calls to OpenRouter), so they are built
+# once at startup and reused across every question in the session.
 RAG_PROMPT = ChatPromptTemplate.from_template(config.RAG_PROMPT_TEMPLATE)
 
-# LLM is stateless — built once at module load rather than once per question.
 LLM = llm_model(
     model_name=config.LLM_MODEL,
     model_api_key=config.OPENROUTER_API_KEY,
@@ -124,10 +126,12 @@ def answer_question(query: str, retriever_obj: VectorStoreRetriever | None) -> s
         return "Please enter a question."
     logger.info("Answering query: %r", query)
     try:
-        # LCEL chain — reads left to right:
-        # retriever fetches the most relevant chunks → format_docs joins them into one
-        # context string → RAG_PROMPT fills {context} and {question} → LLM generates
-        # the answer → StrOutputParser extracts the plain string from the message object.
+        # LCEL chain — each stage pipes its output into the next:
+        # 1. retriever: similarity-searches the vector store for the top-k most relevant chunks
+        # 2. format_docs: joins those chunks into a single {context} string
+        # 3. RAG_PROMPT: fills {context} and {question} into the prompt template
+        # 4. LLM: generates the answer from the completed prompt
+        # 5. StrOutputParser: unwraps the plain string from the AIMessage response object
         chain = (
             {"context": retriever_obj | format_docs, "question": RunnablePassthrough()}
             | RAG_PROMPT
@@ -142,6 +146,8 @@ def answer_question(query: str, retriever_obj: VectorStoreRetriever | None) -> s
         return f"Failed to generate an answer: {exc}"
 
 
+# gr.Blocks is Gradio's low-level layout API — components defined inside the
+# `with` block are rendered top-to-bottom as a single-page web app.
 with gr.Blocks(title="RAG Chatbot") as rag_application:
     # gr.State holds the retriever object server-side across button clicks for
     # this user session — Gradio passes it automatically as a function argument.
@@ -157,12 +163,14 @@ with gr.Blocks(title="RAG Chatbot") as rag_application:
 
     status_box = gr.Textbox(label="Status", interactive=False)
 
-    gr.HTML("<hr>")
+    gr.Markdown("---")
 
     query_input = gr.Textbox(label="Question", lines=2, placeholder="Ask something about the document...")
     ask_btn = gr.Button("Ask", variant="primary")
     answer_box = gr.Textbox(label="Answer", lines=5, interactive=False)
 
+    # .click() maps a button to a Python function — `inputs` lists the component
+    # values to pass in; `outputs` lists the components to update with the return values.
     process_btn.click(
         fn=build_retriever,
         inputs=[file_input],
