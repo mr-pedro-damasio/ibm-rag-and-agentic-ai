@@ -1,15 +1,10 @@
+import config
 import logging
-from config import (
-    OPENROUTER_API_KEY, OPENROUTER_BASE_URL,
-    LLM_MODEL, LLM_TEMPERATURE, LLM_MAX_TOKENS,
-    EMBEDDING_MODEL, EMBEDDING_DIMENSIONS,
-    CHUNK_SIZE, CHUNK_OVERLAP,
-    GRADIO_SERVER_NAME, GRADIO_SERVER_PORT, GRADIO_SHARE,
-    RAG_PROMPT_TEMPLATE,
-)
+
 from langchain_openrouter import ChatOpenRouter
 from pypdf import PdfReader
 from langchain_core.documents import Document
+from langchain_core.vectorstores import VectorStoreRetriever
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
@@ -28,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # Factory kept as a named function so the parameter list is explicit and the
 # module-level LLM = llm_model(...) call site reads as configuration, not magic.
-def llm_model(model_name, model_api_key, model_base_url, model_temperature, model_maxtokens):
+def llm_model(model_name: str, model_api_key: str, model_base_url: str, model_temperature: float, model_maxtokens: int) -> ChatOpenRouter:
     model = ChatOpenRouter(
         model=model_name,
         api_key=model_api_key,
@@ -38,20 +33,18 @@ def llm_model(model_name, model_api_key, model_base_url, model_temperature, mode
     )
     return model
 
-
-RAG_PROMPT = ChatPromptTemplate.from_template(RAG_PROMPT_TEMPLATE)
+RAG_PROMPT = ChatPromptTemplate.from_template(config.RAG_PROMPT_TEMPLATE)
 
 # LLM is stateless — built once at module load rather than once per question.
 LLM = llm_model(
-    model_name=LLM_MODEL,
-    model_api_key=OPENROUTER_API_KEY,
-    model_base_url=OPENROUTER_BASE_URL,
-    model_temperature=LLM_TEMPERATURE,
-    model_maxtokens=LLM_MAX_TOKENS,
+    model_name=config.LLM_MODEL,
+    model_api_key=config.OPENROUTER_API_KEY,
+    model_base_url=config.OPENROUTER_BASE_URL,
+    model_temperature=config.LLM_TEMPERATURE,
+    model_maxtokens=config.LLM_MAX_TOKENS,
 )
 
-
-def document_loader(file_path):
+def document_loader(file_path: str) -> list[Document]:
     logger.info("Loading PDF from: %s", file_path)
     reader = PdfReader(file_path)
     # extract_text() returns None for image-only pages; `or ""` keeps the page
@@ -65,7 +58,7 @@ def document_loader(file_path):
     ]
 
 
-def text_splitter(data_to_split, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP):
+def text_splitter(data_to_split: list[Document], chunk_size: int = config.CHUNK_SIZE, chunk_overlap: int = config.CHUNK_OVERLAP) -> list[Document]:
     logger.info("Splitting %d pages into chunks (size=%d, overlap=%d)", len(data_to_split), chunk_size, chunk_overlap)
     # RecursiveCharacterTextSplitter tries to split on paragraph → sentence →
     # word boundaries before falling back to raw characters, so chunks tend to
@@ -79,20 +72,20 @@ def text_splitter(data_to_split, chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVER
     return chunks
 
 
-def build_vector_store(chunks):
+def build_vector_store(chunks: list[Document]) -> Chroma:
     # Embeds chunks into an in-memory Chroma store. The store is ephemeral —
     # it lives only for this session and is rebuilt on each new document upload.
-    logger.info("Embedding %d chunks (model=%s, dim=%d)", len(chunks), EMBEDDING_MODEL, EMBEDDING_DIMENSIONS)
+    logger.info("Embedding %d chunks (model=%s, dim=%d)", len(chunks), config.EMBEDDING_MODEL, config.EMBEDDING_DIMENSIONS)
     embeddings = OpenAIEmbeddings(
-        model=EMBEDDING_MODEL,
-        openai_api_key=OPENROUTER_API_KEY,
-        openai_api_base=OPENROUTER_BASE_URL,  # routes the OpenAI SDK's embedding calls through OpenRouter
-        dimensions=EMBEDDING_DIMENSIONS,
+        model=config.EMBEDDING_MODEL,
+        openai_api_key=config.OPENROUTER_API_KEY,
+        openai_api_base=config.OPENROUTER_BASE_URL,  # routes the OpenAI SDK's embedding calls through OpenRouter
+        dimensions=config.EMBEDDING_DIMENSIONS,
     )
     return Chroma.from_documents(chunks, embeddings)
 
 
-def format_docs(docs):
+def format_docs(docs: list[Document]) -> str:
     # Double newline acts as a clear paragraph separator; a single newline risks
     # fusing two unrelated chunks into a run-on passage inside the prompt context.
     return "\n\n".join(doc.page_content for doc in docs)
@@ -100,7 +93,7 @@ def format_docs(docs):
 
 # Indexing step — runs once per document upload; result cached in gr.State so
 # subsequent questions reuse the retriever without re-embedding.
-def build_retriever(file):
+def build_retriever(file: str | None) -> tuple[VectorStoreRetriever | None, str]:
     if file is None:
         return None, "No file uploaded."
     logger.info("Building retriever for: %s", file)
@@ -124,7 +117,7 @@ def build_retriever(file):
 
 
 # Query step — receives the cached retriever from gr.State and runs the LCEL chain.
-def answer_question(query, retriever_obj):
+def answer_question(query: str, retriever_obj: VectorStoreRetriever | None) -> str:
     if retriever_obj is None:
         return "Please process a document first."
     if not query or not query.strip():
@@ -182,5 +175,6 @@ with gr.Blocks(title="RAG Chatbot") as rag_application:
     )
 
 
-logger.info("Starting QA Bot on %s:%d (share=%s)", GRADIO_SERVER_NAME, GRADIO_SERVER_PORT, GRADIO_SHARE)
-rag_application.launch(server_name=GRADIO_SERVER_NAME, server_port=GRADIO_SERVER_PORT, share=GRADIO_SHARE)
+if __name__ == "__main__":
+    logger.info("Starting QA Bot on %s:%d (share=%s)", config.GRADIO_SERVER_NAME, config.GRADIO_SERVER_PORT, config.GRADIO_SHARE)
+    rag_application.launch(server_name=config.GRADIO_SERVER_NAME, server_port=config.GRADIO_SERVER_PORT, share=config.GRADIO_SHARE)
