@@ -93,12 +93,12 @@ Copy `.env.example` to `.env` and fill in the two values:
 | Constant | Default | Notes |
 |---|---|---|
 | `LLM_MODEL` | `openai/gpt-4o-mini` | Chat model for answer generation |
-| `LLM_TEMPERATURE` | `0.7` | Randomness; set to `0` for deterministic output |
+| `LLM_TEMPERATURE` | `0.2` | Low temperature for factual answers; set to `0` for fully deterministic output |
 | `LLM_MAX_TOKENS` | `2048` | Max tokens in the generated answer |
 | `EMBEDDING_MODEL` | `openai/text-embedding-3-small` | Embedding model |
 | `EMBEDDING_DIMENSIONS` | `1024` | Embedding size (256–1536 supported) |
 | `CHUNK_SIZE` | `1000` | Characters per text chunk |
-| `CHUNK_OVERLAP` | `50` | Overlap between consecutive chunks |
+| `CHUNK_OVERLAP` | `200` | 20% overlap — ensures sentences at chunk boundaries appear in both adjacent chunks |
 | `GRADIO_SERVER_NAME` | `localhost` | Bind address |
 | `GRADIO_SERVER_PORT` | `7860` | Web server port |
 | `GRADIO_SHARE` | `False` | Set to `True` to create a public Gradio tunnel |
