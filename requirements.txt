@@ -19,3 +19,5 @@ llama-index-core
 llama-index
 llama-index-llms-langchain
 llama-index-llms-openai-like
+sentence-transformers
+ipywidgets
